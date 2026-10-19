@@ -390,3 +390,9 @@ Flush distributed Redis caches across all services.
     "message": "Redis cache invalidated successfully."
   }
   ```
+
+---
+
+## 4. API Versioning & Changelog
+
+For a complete history of API changes, versioning policy, deprecation calendar, and migration examples for breaking changes, see **[API_CHANGELOG.md](./API_CHANGELOG.md)**.
