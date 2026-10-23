@@ -103,6 +103,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (!eventData || typeof eventData !== 'object') return;
 
     const eventType = eventData.type;
+    if (eventType === 'payment_received' || eventType === 'payment_released') {
+      window.dispatchEvent(new CustomEvent('ai-net-payment', { detail: eventData }));
+    }
     const taskId = eventData.taskId;
     const nodeId = eventData.nodeId;
     const payload = eventData.payload;
