@@ -4,6 +4,8 @@
 >
 > Estimated time to complete: **45–60 minutes** on Stellar Testnet.
 
+For model selection, prompt templates, context management, token-cost estimation, streaming, and Venice API error handling, see the [Venice AI Prompting Guide](VENICE_AI_PROMPTING.md).
+
 ---
 
 ## Table of Contents
