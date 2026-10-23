@@ -38,6 +38,7 @@ import { healthRouter } from "./routes/health";
 import { metricsRouter } from "./routes/metrics";
 import { createStatsRouter } from "./routes/stats";
 import { createReconciliationRouter, type ReconciliationRouterOptions } from "./routes/reconciliation";
+import { createPaymentsRouter } from "./routes/payments";
 import {
   rateLimitMiddleware,
   registerRateLimitMiddleware,
@@ -229,6 +230,7 @@ export function createApp(opts: AppOptions = {}): {
 
   // ── Payment reconciliation routes ──────────────────────────────────────────
   app.use("/api/reconciliation", createReconciliationRouter(opts.reconciliation));
+  app.use("/api/payments", createPaymentsRouter());
 
   // ── Rate-limit status endpoint ─────────────────────────────────────────────
   app.use("/api/ratelimit", publicLimiter.middleware, createRateLimitRouter());

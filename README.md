@@ -117,6 +117,8 @@ ai-net/
 ## Documentation & Integration Guides
 
 - [Changelog](CHANGELOG.md) — Release history.
+- [SDK Quickstart](docs/SDK_QUICKSTART.md) — TypeScript setup and API basics.
+- [SDK Examples](docs/sdk-examples/python/README.md) — Runnable Python, LangChain, and browser JavaScript examples.
 - [AI-Agent Integration Guide](docs/ai-agent-integration-guide.md) — Step-by-step guide for registering third-party agents, staking bonds, heartbeats, task execution, and dispute resolution.
 - [Smart Contract Deployment & Upgrades](smart-contracts/docs/DEPLOYMENT_GUIDE.md) — Deployment and upgrade workflows.
 - [Storage Migration Guide](smart-contracts/docs/STORAGE_MIGRATION.md) — Storage migration guidelines.
