@@ -7,7 +7,7 @@ import { useWallet } from '../../context/WalletContext'
 import Sidebar from './Sidebar'
 import TopNav from './TopNav'
 import MobileDrawer from './MobileDrawer'
-import Breadcrumb from './Breadcrumb'
+import Breadcrumb, { BreadcrumbContext } from './Breadcrumb'
 import Footer from '../landing/Footer'
 import './AppShell.css'
 
@@ -58,6 +58,7 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { publicKey } = useWallet()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readSidebarState(publicKey))
+  const [breadcrumbPageLabel, setBreadcrumbPageLabel] = useState<{ pathname: string; label: string } | null>(null)
   const location = useLocation()
   const navigate = useNavigate()
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -118,6 +119,10 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
     setIsDrawerOpen((prev) => !prev)
   }, [])
 
+  const publishBreadcrumbPageLabel = useCallback((pathname: string, label: string) => {
+    setBreadcrumbPageLabel({ pathname, label })
+  }, [])
+
   const handleNavigate = useCallback(
     (path: string) => {
       navigate(path)
@@ -164,10 +169,12 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
         className={`main-content ${!isMobile && sidebarCollapsed ? 'sidebar-collapsed' : ''}`}
         tabIndex={-1}
       >
-        <Breadcrumb />
-        <div className="main-content-body">
-          {children}
-        </div>
+        <BreadcrumbContext.Provider value={{ pageLabel: breadcrumbPageLabel, setPageLabel: publishBreadcrumbPageLabel }}>
+          <Breadcrumb />
+          <div className="main-content-body">
+            {children}
+          </div>
+        </BreadcrumbContext.Provider>
         <Footer />
       </main>
     </div>
