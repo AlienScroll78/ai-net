@@ -38,6 +38,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify generated OpenAPI specification is current
+        run: node scripts/generate-openapi.js && git diff --exit-code -- docs/openapi.yaml
+
+      - name: Lint OpenAPI specification
+        run: npx --yes @redocly/cli lint docs/openapi.yaml --config redocly.yaml
+
       - name: Lint
         run: npx eslint src --ext .ts --max-warnings 0 || true
 

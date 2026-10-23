@@ -59,6 +59,10 @@ import { createV2TasksRouter } from "./routes/v2/tasks";
 import { createAuthRouter } from "./routes/auth";
 import { createFlagsRouter } from "./routes/flags";
 import { createVersionsRouter } from "./routes/versions";
+import { createRateLimitRouter } from "./routes/ratelimit";
+import { createEventsRouter } from "./routes/events";
+import { createPaymentsRouter } from "./routes/payments";
+import { createAdminRouter } from "./routes/admin";
 import { type AuthService } from "../services/auth";
 import { createLogger } from "../utils/logger";
 import { AppError } from "../errors";
@@ -209,6 +213,7 @@ export function createApp(opts: AppOptions = {}): {
   });
 
   // ── Admin Queue routes ─────────────────────────────────────────────────────
+  app.use("/api/admin", createAdminRouter({ queue: jobQueue, reconciliation: opts.reconciliation }));
   app.use("/api/admin/queue", adminLimiter.middleware, createAdminQueueRouter(jobQueue));
   app.use("/api/admin", adminLimiter.middleware, createAdminQueueRouter(jobQueue));
 
@@ -218,11 +223,15 @@ export function createApp(opts: AppOptions = {}): {
   // ── Versioning lifecycle endpoint (#426) ───────────────────────────────────
   app.use("/api/versions", createVersionsRouter());
 
+  // ── Events and payment history ─────────────────────────────────────────────
+  app.use("/api/events", createEventsRouter());
+  app.use("/api/payments", createPaymentsRouter());
+
   // ── Payment reconciliation routes ──────────────────────────────────────────
   app.use("/api/reconciliation", createReconciliationRouter(opts.reconciliation));
 
   // ── Rate-limit status endpoint ─────────────────────────────────────────────
-  app.use("/api/ratelimit", publicLimiter.middleware);
+  app.use("/api/ratelimit", publicLimiter.middleware, createRateLimitRouter());
 
   app.use((_req: Request, res: Response) => {
     res.status(404).json({
