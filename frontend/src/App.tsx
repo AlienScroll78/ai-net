@@ -11,7 +11,7 @@ import ServerErrorPage from './pages/ServerErrorPage'
 import ForbiddenPage from './pages/ForbiddenPage'
 import AppShell from './components/layout/AppShell'
 import LandingPage from './pages/LandingPage'
-import ErrorBoundary from './components/common/ErrorBoundary'
+import ErrorBoundary, { RouteErrorBoundary } from './components/common/ErrorBoundary'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { CommandPalette } from './components/common/CommandPalette'
 import RouteLoader from './components/common/RouteLoader'
@@ -63,17 +63,21 @@ const RoutedContent: React.FC = () => {
                   <Route
                     path="/dashboard"
                     element={
-                      <ProtectedRoute>
-                        <DashboardPage />
-                      </ProtectedRoute>
+                      <RouteErrorBoundary label="Dashboard">
+                        <ProtectedRoute>
+                          <DashboardPage />
+                        </ProtectedRoute>
+                      </RouteErrorBoundary>
                     }
                   />
                   <Route
                     path="/wallet"
                     element={
-                      <ProtectedRoute>
-                        <WalletPage />
-                      </ProtectedRoute>
+                      <RouteErrorBoundary label="Wallet">
+                        <ProtectedRoute>
+                          <WalletPage />
+                        </ProtectedRoute>
+                      </RouteErrorBoundary>
                     }
                   />
                   <Route
@@ -97,9 +101,11 @@ const RoutedContent: React.FC = () => {
                   <Route
                     path="/agents"
                     element={
-                      <ProtectedRoute>
-                        <AgentsPage />
-                      </ProtectedRoute>
+                      <RouteErrorBoundary label="Agents">
+                        <ProtectedRoute>
+                          <AgentsPage />
+                        </ProtectedRoute>
+                      </RouteErrorBoundary>
                     }
                   />
                   <Route path="/forbidden" element={<ForbiddenPage />} />
@@ -115,25 +121,31 @@ const RoutedContent: React.FC = () => {
                   <Route
                     path="/tasks/new"
                     element={
-                      <ProtectedRoute>
-                        <NewTaskPage />
-                      </ProtectedRoute>
+                      <RouteErrorBoundary label="New Task">
+                        <ProtectedRoute>
+                          <NewTaskPage />
+                        </ProtectedRoute>
+                      </RouteErrorBoundary>
                     }
                   />
                   <Route
                     path="/tasks/history"
                     element={
-                      <ProtectedRoute>
-                        <TaskHistoryPage />
-                      </ProtectedRoute>
+                      <RouteErrorBoundary label="Task History">
+                        <ProtectedRoute>
+                          <TaskHistoryPage />
+                        </ProtectedRoute>
+                      </RouteErrorBoundary>
                     }
                   />
                   <Route
                     path="/tasks/:id"
                     element={
-                      <ProtectedRoute>
-                        <TaskDetailPage />
-                      </ProtectedRoute>
+                      <RouteErrorBoundary label="Task Detail">
+                        <ProtectedRoute>
+                          <TaskDetailPage />
+                        </ProtectedRoute>
+                      </RouteErrorBoundary>
                     }
                   />
                   {import.meta.env.DEV && (
