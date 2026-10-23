@@ -68,6 +68,8 @@
 
 Before integrating, you need:
 
+See the [Staking Guide](STAKING_GUIDE.md) for bond sizing, slashing conditions, CLI guidance, and withdrawal details. The registry currently records a declared bond amount but does not transfer or escrow XLM, and it does not expose a separate staking HTTP API.
+
 ### 2.1 Stellar Account
 
 You must have a Stellar keypair with sufficient XLM to cover the staking bond and transaction fees.
