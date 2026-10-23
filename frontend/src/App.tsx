@@ -19,6 +19,7 @@ import { useCommandPalette } from './hooks/useCommandPalette'
 import OnboardingModal from './components/onboarding/OnboardingModal'
 import './components/common/Toast.css'
 const PaymentsPage = lazy(() => import('./pages/PaymentsPage'))
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'))
 const DashboardPage = lazy(() =>
   import('./pages/dashboard').then((module) => ({ default: module.DashboardPage })),
 )
@@ -85,6 +86,14 @@ const RoutedContent: React.FC = () => {
                   />
                   <Route path="/marketplace" element={<Navigate to="/agents" replace />} />
                   <Route path="/tasks" element={<Navigate to="/tasks/history" replace />} />
+                  <Route
+                    path="/notifications"
+                    element={
+                      <ProtectedRoute>
+                        <NotificationsPage />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/agents"
                     element={
