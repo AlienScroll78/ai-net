@@ -2,6 +2,8 @@
 
 Comprehensive reference for the **AI-Net Decentralized AI Agent Network API**. This guide covers authentication schemes, error taxonomy, request/response schemas, and runnable `curl` examples for every public endpoint.
 
+For API versioning rules, historical changes, deprecations, and migration examples, see the [API Changelog](./API_CHANGELOG.md).
+
 ---
 
 ## 1. Overview & Authentication
