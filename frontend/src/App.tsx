@@ -7,6 +7,8 @@ import { WalletProvider } from './context/WalletContext'
 import { ToastProvider } from './context/ToastContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { NotFoundPage } from './pages/NotFoundPage'
+import ServerErrorPage from './pages/ServerErrorPage'
+import ForbiddenPage from './pages/ForbiddenPage'
 import AppShell from './components/layout/AppShell'
 import LandingPage from './pages/LandingPage'
 import ErrorBoundary from './components/common/ErrorBoundary'
@@ -91,6 +93,8 @@ const RoutedContent: React.FC = () => {
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="/forbidden" element={<ForbiddenPage />} />
+                  <Route path="/server-error" element={<ServerErrorPage />} />
                   <Route
                     path="/agents/:id"
                     element={
