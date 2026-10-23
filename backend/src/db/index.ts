@@ -16,6 +16,8 @@ export interface PaymentRecord {
   status: PaymentStatus;
   amountStroops: bigint;
   txHash: string | null;
+  /** ISO-8601 timestamp at which the payment was first recorded. */
+  createdAt?: string;
 }
 
 const logger = createLogger({ component: "payment-db" });
@@ -38,6 +40,7 @@ function applyPaymentSchema(db: Database.Database): void {
       status       TEXT NOT NULL DEFAULT 'locked',
       amountStroops TEXT NOT NULL,
       txHash       TEXT,
+      "createdAt"  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
       PRIMARY KEY (taskId, nodeId)
     )
   `);
@@ -107,13 +110,15 @@ export interface PaymentDb {
 export function createPaymentDb(db: Database.Database): PaymentDb {
   return {
     insert(record: PaymentRecord): void {
+      const createdAt = record.createdAt ?? new Date().toISOString();
       db.prepare(`
-        INSERT INTO payments (taskId, nodeId, balanceId, status, amountStroops, txHash)
-        VALUES (@taskId, @nodeId, @balanceId, @status, @amountStroops, @txHash)
+        INSERT INTO payments (taskId, nodeId, balanceId, status, amountStroops, txHash, "createdAt")
+        VALUES (@taskId, @nodeId, @balanceId, @status, @amountStroops, @txHash, @createdAt)
       `).run({
         ...record,
         amountStroops: record.amountStroops.toString(),
         txHash: record.txHash,
+        createdAt,
       });
     },
 
@@ -129,6 +134,7 @@ export function createPaymentDb(db: Database.Database): PaymentDb {
         status: row.status as PaymentStatus,
         amountStroops: BigInt(row.amountStroops as string),
         txHash: row.txHash as string | null,
+        createdAt: row.createdAt as string | undefined,
       };
     },
 
@@ -147,6 +153,7 @@ export function createPaymentDb(db: Database.Database): PaymentDb {
         status: row.status as PaymentStatus,
         amountStroops: BigInt(row.amountStroops as string),
         txHash: row.txHash as string | null,
+        createdAt: row.createdAt as string | undefined,
       }));
     },
   };
