@@ -127,7 +127,7 @@
   "validation.amountPositive": "金额必须大于 0 — 请输入正数。",
   "validation.insufficientBalance": "您的钱包余额不足以完成此交易。请先充值后重试。",
   "validation.promptRequired": "任务描述为必填项 — 请描述您希望智能体网络执行的操作。",
-  "validation.promptTooLong": "任务描述不能超过 2000 个字符 — 请缩短描述内容。",
+  "validation.promptTooLong": "任务描述不能超过 4000 个字符 — 请缩短描述内容。",
   "validation.promptTooShort": "任务描述至少需要 20 个字符 — 请详细描述您的目标。",
   "validation.minBudget": "最低预算为 0.1 XLM — 请输入更高的金额。",
   "validation.agentRequired": "请至少选择一个专业智能体来处理您的任务。",
@@ -431,5 +431,16 @@
   "palette.action.copyAddressFailed": "无法复制钱包地址",
   "palette.action.toggleTheme": "切换主题",
   "palette.action.toggleThemeHint": "当前：{{mode}}",
-  "palette.task.noPrompt": "无提示词"
+  "palette.task.noPrompt": "无提示词",
+
+  "ws.status.connecting": "连接中",
+  "ws.status.connected": "已连接",
+  "ws.status.reconnecting": "重新连接中",
+  "ws.status.disconnected": "已断开",
+  "ws.status.error": "错误",
+  "ws.status.fallback": "离线模式",
+  "agent.status.online": "在线",
+  "agent.status.offline": "离线",
+  "agent.status.busy": "忙碌",
+  "agent.status.error": "错误"
 }
