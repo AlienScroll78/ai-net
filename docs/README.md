@@ -10,3 +10,4 @@ Use these docs as the navigation entry point for implementation and operations w
 | [Governance Voting Guide](GOVERNANCE_GUIDE.md) | Agent-governance voting rules, proposal lifecycle, Soroban RPC access, and multisig actions |
 | [Node Operators Guide](NODE_OPERATORS_GUIDE.md) | Production/testnet node setup, secrets, deployment, monitoring, backup, and troubleshooting |
 | [End-to-End Testing](e2e-testing.md) | E2E setup and validation |
+| [Dispute Resolution Guide](DISPUTE_RESOLUTION_GUIDE.md) | When and how to raise a dispute, lifecycle diagram, CLI/SDK examples, arbitration process, outcomes, and escalation to governance |
