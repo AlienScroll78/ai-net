@@ -498,6 +498,10 @@ components:
         reputationScore:
           type: number
           example: 98.5
+        quality_score:
+          type: number
+          description: Average composite quality score (0-100), when score history exists
+          example: 87.5
         lastSeenAt:
           type: string
           format: date-time
