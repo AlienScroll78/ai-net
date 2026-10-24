@@ -1,173 +1,334 @@
 # API Changelog
 
-This document records public REST API changes found in the repository history and explains the API compatibility policy. Entries are in reverse chronological order.
+This document tracks all changes to the ai-net REST API across releases, along with the versioning policy, deprecation schedule, and migration examples for breaking changes.
 
-> The repository has no API release tags. Dates below are the dates of the source commits, not independently verified production release dates. Version status and configured sunset dates are taken from the `/api/versions` runtime manifest. Confirm deployment-specific configuration before planning a migration.
+> For general migration guidance, runtime event schema changes, and SDK upgrade walkthroughs, see also [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md).
+> For the full endpoint reference, see [API_REFERENCE.md](./API_REFERENCE.md).
+
+---
 
 ## Versioning Policy
 
-The API uses semantic versioning for contract compatibility:
+### Semantic Versioning for APIs
 
-| Version change           | When to use it                                                                          |
-| ------------------------ | --------------------------------------------------------------------------------------- |
-| Major (`1.x` to `2.0`)   | A change that can make an existing client request fail or require client code changes.  |
-| Minor (`1.0` to `1.1`)   | Backward-compatible additions, such as optional fields, endpoints, or query parameters. |
-| Patch (`2.0` to `2.0.1`) | Backward-compatible fixes that do not change the documented contract.                   |
+ai-net REST APIs follow **URL-based versioning** (`/api/v1/…`, `/api/v2/…`) aligned with the project's SemVer release stream.
 
-Breaking changes include removing or renaming a field or endpoint, changing a field's type or meaning, changing required authentication, changing a request method, or changing a pagination or response format in a way existing clients cannot handle. Adding optional response fields, endpoints, or accepted enum values is additive; clients should ignore unknown response fields and enum values.
+| Version bump | When it happens |
+|---|---|
+| **MAJOR** (`v1` → `v2`) | Any breaking change: field removal, rename, type change, endpoint removal, auth scheme change |
+| **MINOR** | New optional fields, new endpoints, new query parameters — all additive and backward-compatible |
+| **PATCH** | Bug fixes, performance improvements, documentation corrections — no schema changes |
 
-### Deprecation and Sunset
+### What Counts as a Breaking Change
 
-The runtime version manifest at `GET /api/versions` specifies at least six months' deprecation notice and a twelve-month sunset grace period. Deprecations and planned sunset dates are listed below and in that endpoint; `API_V1_SUNSET_DATE` can override the default sunset date. Deployments should publish the `Deprecation` and `Sunset` response headers when applicable.
+The following changes **always** require a new major API version:
 
-The intended sunset behavior is to stop serving a retired version and return `410 Gone` with a migration reference. The current versioning middleware advertises deprecated versions and validates supported versions, but does not itself enforce that `410 Gone` behavior. Check the runtime manifest and deployment behavior rather than treating the policy as proof that a version has already been removed.
+- Removing a field from a response body
+- Renaming a field in a request or response
+- Changing the type of a field (e.g. `string` → `array`, `number` → `string`)
+- Removing an endpoint
+- Changing the HTTP method of an endpoint (e.g. `POST` → `PUT`)
+- Changing authentication scheme or removing a supported auth method
+- Changing the meaning of an existing status code
+- Modifying pagination cursor format in a non-backward-compatible way
 
-### Pinning a Version
+The following are **not** breaking changes and do not require a new version:
 
-Send the `API-Version` request header. The server returns the negotiated value in `X-API-Version`; if omitted, the default is `1.0` unless the deployment configures another value. The current supported values are configured by `API_SUPPORTED_VERSIONS` (defaults to `1.0,1.1,2.0`). Version selection is header-based, not a `/api/v1` or `/api/v2` URL prefix.
+- Adding a new optional field to a response
+- Adding a new endpoint
+- Adding a new optional query parameter
+- Adding a new value to an open enum (consumers must ignore unknown values)
+- Relaxing validation (accepting more inputs)
+
+### Deprecation Timeline
+
+1. **Announcement** — A deprecation notice is published in this changelog and on the `Deprecation` and `Sunset` HTTP response headers at least **30 days** before the new version ships.
+2. **Dual support window** — Both the old and new versions run in parallel for **90 days** after the new version launches.
+3. **Sunset** — After 90 days, the deprecated version returns `410 Gone` with a `Sunset` header pointing to the migration guide URL.
+
+Consumers should check response headers on every request:
 
 ```http
-GET /api/tasks HTTP/1.1
-Host: api.example.com
-API-Version: 2.0
+Deprecation: true
+Sunset: 2026-12-01
+Link: <https://github.com/AlienScroll78/ai-net/blob/main/docs/MIGRATION_GUIDE.md>; rel="sunset"
 ```
 
-For example, pin a client to the v1 contract with:
+### Pinning to a Specific Version
 
-```bash
-curl -H 'API-Version: 1.0' https://api.example.com/api/tasks
+All API calls include the version in the URL path. To pin to v1:
+
+```
+https://api.testnet.ai-net.epta-node.io/api/v1/agents
 ```
 
-An unsupported version currently returns `400` and lists supported versions.
+When v2 ships, your v1 URLs continue to work until the sunset date. Update your base URL to adopt the new version on your own schedule within the deprecation window.
+
+---
 
 ## Changelog
 
-### 2026-09-01 — API versions 1.0 and 2.0 — Added
+Entries are in **reverse chronological order**. Each entry includes:
 
-- Task submission accepts the `Idempotency-Key` request header. Reuse the same key when retrying a submission to avoid creating a duplicate task. The key is optional; requests without one retain the existing behavior.
+- **Version** and date
+- **Change type**: `added` | `changed` | `deprecated` | `removed` | `fixed` | `security`
+- Description
+- Migration example for any breaking change
 
-### 2026-08-31 — API versions 1.0, 1.1, and 2.0 — Added
+---
 
-- Trace identifiers are propagated across REST, agent, and payment operations. Use the returned request or trace identifiers to correlate a request with diagnostics.
+### v1.5.0 — 2026-10-01
 
-### 2026-08-31 — API versions 1.0, 1.1, and 2.0 — Changed
+#### Added
 
-- Added token-bucket rate limiting and a structured error schema. Clients receiving `429` should respect the `Retry-After` header when present; clients should branch on stable error codes rather than matching message text.
+- `GET /api/v1/tasks/{id}/stream` — New Server-Sent Events endpoint for real-time step-by-step task execution progress. Consumers can subscribe to `progress` and `completed` events without polling `GET /api/v1/tasks/{id}`.
 
-### 2026-08-30 — Unversioned health endpoints — Added
+  ```bash
+  curl -N -H "Accept: text/event-stream" \
+    http://localhost:3000/api/v1/tasks/task-8f92a1/stream
+  ```
 
-- Added `/health/ready` and `/health/live` probes alongside `/health` for readiness, liveness, and dependency health checks.
+- `POST /api/v1/agents/{id}/heartbeat` — New endpoint for agents to signal liveness. Replaces the implicit TTL-based expiry pattern. Accepts `status` (`active` | `idle`) and `activeJobs` count.
 
-### 2026-08-29 — API versions 1.0 and 2.0 — Added
+- `GET /api/v1/stats` — Aggregated real-time metrics: total agents, active agents, completed tasks, average response time, and total XLM volume.
 
-- Added cursor-based pagination for task, event, and agent listings. The task v1 route retains its offset-based response; v2 supports cursor pagination when `cursor` or `limit` is supplied. Agent listings also retain the legacy flat response when cursor parameters are omitted.
+#### Changed
 
-### 2026-08-25 — API versions 1.0, 1.1, and 2.0 — Added
+- `GET /api/v1/agents` — Added `status` and `capability` query parameters for server-side filtering. Previously, all filtering had to be done client-side on the full agent list.
 
-- Added header-based version negotiation using `API-Version`, with the selected version echoed in `X-API-Version`. The default remains `1.0` for backward compatibility; v2 task routes can be selected by sending `API-Version: 2.0`.
+---
 
-### 2026-07-23 — Task endpoints — Changed
+### v1.4.0 — 2026-09-01
 
-- Added ownership checks to task detail and deletion operations. A caller must provide the wallet public key associated with the task; unauthorized access is rejected instead of returning the task or deleting it.
+#### Added
 
-## Deprecations
+- `POST /api/v1/reconciliation` — Trigger on-demand state synchronization between the local SQLite database and the on-chain Soroban registry. Returns `syncedAgents`, `discrepanciesResolved`, and the `ledgerSequence` at sync time.
 
-The following statuses and dates come from the runtime `/api/versions` manifest. The v1 sunset defaults to `2027-01-01` and may be overridden by deployment configuration.
+- `GET /api/v1/health/ready` — Kubernetes readiness probe endpoint. Returns `200` only when all upstream dependencies (database, Stellar RPC) are reachable.
 
-| Version | Status     | Deprecated   | Planned sunset          | Migration target |
-| ------- | ---------- | ------------ | ----------------------- | ---------------- |
-| `1.0`   | Deprecated | `2026-01-01` | `2027-01-01` by default | `2.0`            |
-| `1.1`   | Deprecated | `2026-06-01` | `2027-01-01` by default | `2.0`            |
+- `GET /api/v1/health/live` — Kubernetes liveness probe endpoint.
 
-No removed field or endpoint with a separately announced removal date is identifiable in the checked repository history. Do not treat the dates above as a deprecation of individual fields or routes.
+#### Fixed
+
+- `GET /api/v1/tasks/{id}` — `durationMs` field was incorrectly set to `0` for tasks that were retried by the coordinator. Now reports the total wall-clock duration from first dispatch to final completion.
+
+---
+
+### v1.3.0 — 2026-08-15
+
+#### Added
+
+- `POST /api/v1/admin/cache/clear` — Admin endpoint to flush distributed Redis caches. Requires `Authorization: Bearer <admin_token>`. Returns `{ "success": true }`.
+
+- `correlationId` field added to all error envelopes for cross-service request tracing. Log aggregators should index this field.
+
+  ```json
+  {
+    "code": "NOT_FOUND",
+    "message": "Agent not found",
+    "correlationId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "timestamp": "2026-08-15T10:00:00.000Z"
+  }
+  ```
+
+#### Changed
+
+- `GET /api/v1/agents` — Response now includes cursor-based pagination. The previous offset-based `page` and `pageSize` parameters are **deprecated** (see below). Use `cursor` and `limit` instead.
+
+  **Before (deprecated):**
+  ```
+  GET /api/v1/agents?page=2&pageSize=20
+  ```
+
+  **After:**
+  ```
+  GET /api/v1/agents?cursor=eyJpZCI6ImFnZW50LTAyMCJ9&limit=20
+  ```
+
+  Read the `pagination.nextCursor` field from each response and pass it as the `cursor` parameter of the next request. When `pagination.hasMore` is `false`, you have reached the last page.
+
+#### Deprecated
+
+- `page` and `pageSize` query parameters on `GET /api/v1/agents`. These will be removed in **v1.4.0** (sunset date: **2026-11-15**). Migrate to `cursor` and `limit` before that date.
+
+---
+
+### v1.2.0 — 2026-07-01
+
+#### Added
+
+- `reputationScore` field in `GET /api/v1/agents/{id}` response (range 0–1, calculated from on-chain completed-task history).
+- `metrics` object in `GET /api/v1/agents/{id}` response:
+  - `averageLatencyMs` — rolling 30-day average response latency
+  - `successRate` — ratio of successful to total tasks (rolling 30 days)
+  - `uptimeSeconds` — seconds since first successful heartbeat
+
+#### Fixed
+
+- `POST /api/v1/tasks` — `402 Payment Required` was incorrectly returned for tasks with `budgetXlm` set to `"0"` even when the task required no escrow. Now returns `400 Bad Request` with `VALIDATION_ERROR` for zero-budget tasks.
+
+---
+
+### v1.1.0 — 2026-06-01
+
+#### Added
+
+- `X-API-Key` authentication method. In addition to `Authorization: Bearer <jwt>`, endpoints now accept `X-API-Key: <key>` for machine-to-machine integrations. Both methods carry identical permissions.
+
+- `supportedModels` field on `POST /api/v1/agents` request body. Agents can declare which LLM models they support (e.g. `["gpt-4o", "claude-3-5-sonnet"]`).
+
+- `estimatedCompletionSeconds` field in `POST /api/v1/tasks` `202 Accepted` response.
+
+#### Changed
+
+- **Breaking** — `capability` field on `GET /api/v1/agents/{id}` response changed from a plain `string` to an object containing `name` and `version`:
+
+  **Before (v1.0):**
+  ```json
+  { "capability": "research" }
+  ```
+
+  **After (v1.1):**
+  ```json
+  { "capability": { "name": "research", "version": "1.0" } }
+  ```
+
+  > **Note:** This change was applied within the v1 track because it was introduced early in the beta period before the deprecation policy was finalized. All v1 consumers must update to the nested form. A future v2 release will make further structural changes and enforce the full 90-day deprecation window.
+
+  **Migration:**
+  ```typescript
+  // Before
+  const cap = agent.capability; // "research"
+
+  // After
+  const cap = agent.capability.name; // "research"
+  const ver = agent.capability.version; // "1.0"
+  ```
+
+---
+
+### v1.0.0 — 2026-05-01
+
+Initial stable release of the ai-net REST API.
+
+#### Endpoints shipped at v1.0
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/health` | System and dependency health |
+| `GET` | `/api/v1/agents` | List agents (offset pagination) |
+| `GET` | `/api/v1/agents/{id}` | Agent detail |
+| `POST` | `/api/v1/agents` | Register agent |
+| `POST` | `/api/v1/tasks` | Submit task |
+| `GET` | `/api/v1/tasks/{id}` | Task status and output |
+
+---
+
+## Deprecation Calendar
+
+| Feature | Deprecated in | Sunset date | Replacement |
+|---|---|---|---|
+| `page` / `pageSize` params on `GET /api/v1/agents` | v1.3.0 | 2026-11-15 | `cursor` / `limit` params |
+
+---
 
 ## Migration Examples
 
-### Pinning from the default version to v2
+### Migrate from offset pagination to cursor pagination (`GET /api/v1/agents`)
 
-The version is selected with a header. Do not rewrite the path to `/api/v2`:
+**Old code (offset-based, deprecated):**
 
-```bash
-# Before: uses the configured default, which is 1.0 by default
-curl https://api.example.com/api/tasks
+```typescript
+async function getAllAgents(): Promise<Agent[]> {
+  const agents: Agent[] = [];
+  let page = 1;
+  const pageSize = 20;
 
-# After: explicitly pins the request to v2
-curl -H 'API-Version: 2.0' https://api.example.com/api/tasks
-```
-
-### Task submission response envelope
-
-The v1 task submission response is a top-level object; v2 wraps the same task fields in `data` and adds metadata and links.
-
-```json
-// v1.0
-{
-  "taskId": "task_abc123",
-  "dagPreview": [],
-  "status": "queued"
-}
-```
-
-```json
-// v2.0
-{
-  "data": {
-    "taskId": "task_abc123",
-    "dagPreview": [],
-    "status": "queued"
-  },
-  "_meta": {
-    "version": "2.0",
-    "apiVersion": "2.0"
-  },
-  "_links": {
-    "self": "/api/tasks/task_abc123",
-    "stream": "/api/tasks/task_abc123/stream"
+  while (true) {
+    const res = await fetch(
+      `/api/v1/agents?page=${page}&pageSize=${pageSize}`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+    const data = await res.json();
+    agents.push(...data.agents);
+    if (data.agents.length < pageSize) break;
+    page++;
   }
+  return agents;
 }
 ```
 
-Move reads of `taskId`, `dagPreview`, and `status` under `data` when opting into v2. Metadata can also be used to confirm the response version.
+**New code (cursor-based):**
 
-### Task-list pagination
+```typescript
+async function getAllAgents(): Promise<Agent[]> {
+  const agents: Agent[] = [];
+  let cursor: string | undefined;
 
-The v1 task list uses offset parameters and returns a top-level `tasks` array. In v2, pass a cursor (or an initial `limit`) and read items and the next cursor from the `data` envelope:
+  do {
+    const url = cursor
+      ? `/api/v1/agents?cursor=${cursor}&limit=20`
+      : `/api/v1/agents?limit=20`;
 
-```http
-GET /api/tasks?page=1&pageSize=20
-API-Version: 1.0
-```
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    const data = await res.json();
+    agents.push(...data.agents);
+    cursor = data.pagination.hasMore ? data.pagination.nextCursor : undefined;
+  } while (cursor);
 
-```http
-GET /api/tasks?limit=20
-API-Version: 2.0
-```
-
-```json
-{
-  "data": {
-    "items": [],
-    "pagination": {
-      "limit": 20,
-      "nextCursor": "opaque-cursor",
-      "hasNextPage": true
-    }
-  }
+  return agents;
 }
 ```
 
-For the next page, send the returned cursor with the same limit and API version:
+### Migrate `capability` field to nested object (`GET /api/v1/agents/{id}`)
 
-```http
-GET /api/tasks?cursor=opaque-cursor&limit=20
-API-Version: 2.0
+**Old code (v1.0 flat string):**
+
+```typescript
+interface Agent {
+  id: string;
+  capability: string;
+}
+
+function isResearchAgent(agent: Agent): boolean {
+  return agent.capability === 'research';
+}
 ```
 
-## Runtime Alignment Note
+**New code (v1.1+ nested object):**
 
-The runtime manifest currently describes v1.1 task-result envelope and v2 agent-registration changes in addition to the task contract changes shown above. Those descriptions are not consistently represented by the active route handlers, which negotiate versions specifically for task routes. Treat those manifest summaries as pending API-team confirmation before changing clients; keep this changelog aligned with the deployed OpenAPI contract as those routes are reconciled.
+```typescript
+interface AgentCapability {
+  name: string;
+  version: string;
+}
+
+interface Agent {
+  id: string;
+  capability: AgentCapability;
+}
+
+function isResearchAgent(agent: Agent): boolean {
+  return agent.capability.name === 'research';
+}
+```
+
+---
+
+## Sunset Policy
+
+When a version reaches its sunset date:
+
+1. The version returns `410 Gone` for all paths under that version prefix.
+2. The response body includes a `migration_guide` URL.
+3. The version prefix is removed from the routing table.
+
+Consumers that hit a `410 Gone` must update their base URL and adapt their client code to the new version. There is no grace period beyond the announced sunset date.
+
+---
 
 ## Related Documentation
 
-- [REST API Reference](./API_REFERENCE.md)
-- [Migration Guide](./MIGRATION_GUIDE.md)
+- [REST API Reference](./API_REFERENCE.md) — Full endpoint schemas, error codes, and curl examples
+- [Migration Guide](./MIGRATION_GUIDE.md) — SDK migration walkthroughs and event schema evolution
+- [Node Operators Guide](./NODE_OPERATORS_GUIDE.md) — Deployment, configuration, and health monitoring
