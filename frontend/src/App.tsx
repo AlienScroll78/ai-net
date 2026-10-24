@@ -98,6 +98,8 @@ const RoutedContent: React.FC = () => {
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="/forbidden" element={<ForbiddenPage />} />
+                  <Route path="/server-error" element={<ServerErrorPage />} />
                   <Route
                     path="/agents"
                     element={
